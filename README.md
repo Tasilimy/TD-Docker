@@ -1,168 +1,192 @@
-TD - Conception d'Application Conteneurisée
+🐳 TD - Application Conteneurisée (Docker)
 
-Ce projet consiste à concevoir, conteneuriser et orchestrer une application web complète respectant les principes DevOps modernes.
+Étudiant : [Ton Nom]
 
-1. Architecture
+Module : Administration Systèmes et Réseaux
 
-L'application repose sur une architecture 3-tiers composée de trois micro-services interconnectés via un réseau privé Docker.
+Sujet : Conception, orchestration et déploiement d'une application 3-tiers sécurisée.
 
-Description des services
+📑 Table des Matières
 
-Front-end (Service front) :
+Architecture Technique
 
-Technologie : Nginx (image nginx:stable-alpine).
+Guide de Démarrage
 
-Rôle : Sert les fichiers statiques (HTML/JS) et agit comme Reverse Proxy.
+Choix Techniques & Sécurité
 
-Interaction : Il écoute sur le port 80. Il redirige les appels API (commençant par /items ou /status) vers le service Backend, masquant ainsi la topologie interne au client.
+Difficultés & Solutions
 
-Back-end (Service api) :
+1. Architecture Technique
 
-Technologie : Python Flask (image python:3.11-slim).
+L'application repose sur une architecture micro-services isolée dans un réseau privé Docker.
 
-Rôle : API REST traitant la logique métier.
-
-Interaction : Il écoute sur le port 8080 (interne). Il interroge la base de données pour récupérer les données.
-
-Base de Données (Service db) :
-
-Technologie : MySQL 8.0.
-
-Rôle : Persistance des données.
-
-Interaction : Écoute sur le port 3306. Initialisée automatiquement avec un script SQL (init.sql) au premier démarrage.
-
-Schéma des interactions
+🧩 Schéma d'Architecture
 
 graph LR
-    User((Utilisateur)) -- HTTP :80 --> Nginx[Front Nginx]
-    subgraph Réseau Docker
-        Nginx -- Proxy :8080 --> API[API Flask]
-        API -- SQL :3306 --> DB[(MySQL)]
+    subgraph "Monde Extérieur"
+        Client((Utilisateur))
     end
 
+    subgraph "Hôte Docker"
+        direction TB
+        Client -- "HTTP :80" --> Front[🖥️ Front Nginx]
+        
+        subgraph "Réseau Privé (Bridge)"
+            Front -- "Proxy Pass :8080" --> API[⚙️ API Flask]
+            API -- "TCP :3306" --> DB[(🗄️ MySQL)]
+        end
+    end
 
-2. Commandes clés
-
-Voici les commandes principales utilisées pour gérer le cycle de vie de l'application :
-
-Construction des images :
-
-docker compose build --pull
-
-
-L'option --pull assure d'utiliser les versions les plus récentes et sécurisées des images de base.
-
-Configuration et Vérification :
-
-docker compose config
+    style Front fill:#009639,stroke:#333,stroke-width:2px,color:white
+    style API fill:#3776AB,stroke:#333,stroke-width:2px,color:white
+    style DB fill:#4479A1,stroke:#333,stroke-width:2px,color:white
 
 
-Permet de valider la syntaxe du fichier docker-compose.yml avant le lancement.
+📦 Description des Services
 
-Déploiement (Démarrage) :
+Service
 
-docker compose up -d
+Image Docker
 
+Rôle & Configuration
 
-Lance l'orchestration en arrière-plan (mode détaché).
+Front-end
 
-Vérification de l'état :
+nginx:stable-alpine
 
-docker compose ps
-
-
-Permet de vérifier que les services sont Up et surtout (healthy).
-
-Arrêt de la stack :
-
-docker compose down
+Reverse Proxy & Serveur statique. 
 
 
-Automatisation :
-Un script deploy.sh regroupe toutes ces étapes pour un déploiement en une seule commande :
+
+• Écoute sur le port 80. 
+
+
+
+• Redirige /items vers l'API.
+
+Back-end
+
+python:3.11-slim
+
+API REST (Flask). 
+
+
+
+• Expose les données JSON. 
+
+
+
+• Écoute sur le port 8080 (interne uniquement).
+
+Base de Données
+
+mysql:8.0
+
+Persistance. 
+
+
+
+• Données stockées dans le volume db-data. 
+
+
+
+• Initialisation auto via init.sql.
+
+2. Guide de Démarrage
+
+✅ Prérequis
+
+Docker Desktop installé.
+
+Git installé.
+
+🚀 Déploiement Automatisé
+
+Un script Bash interactif est fourni pour valider, construire et lancer la stack en une commande :
 
 ./deploy.sh
 
 
-3. Bonnes pratiques suivies
+🛠️ Commandes Manuelles
 
-Conformément aux exigences du sujet, nous avons appliqué les pratiques suivantes pour optimiser la sécurité et la performance :
+Action
 
-Builds Multi-étapes (Multi-stage builds) :
+Commande
 
-Utilisation d'une étape intermédiaire builder pour installer les dépendances Python.
+Construction
 
-L'image finale est copiée depuis le builder, ne conservant que le nécessaire d'exécution, ce qui réduit drastiquement la taille de l'image.
+docker compose build --pull
 
-Images légères :
+Lancement
 
-Choix de python:3.11-slim (au lieu de l'image standard) et nginx:alpine pour minimiser l'empreinte disque et la surface d'attaque.
+docker compose up -d
 
-Utilisation de .dockerignore :
+Statut
 
-Exclusion des fichiers inutiles (__pycache__, .git, .env, logs) du contexte de build pour accélérer la construction et alléger les images.
+docker compose ps
 
-Sécurité (Utilisateur Non-Root) :
+Arrêt
 
-Création d'un utilisateur système dédié appuser dans les Dockerfiles API et Front.
+docker compose down
 
-Configuration des permissions spécifiques (notamment pour Nginx sur /var/cache et /var/run) pour permettre l'exécution sans privilèges root.
+3. Choix Techniques & Sécurité
 
-Supervision (Healthchecks) :
+Pour répondre aux exigences de production, plusieurs bonnes pratiques DevOps ont été implémentées :
 
-Implémentation de sondes de santé (HEALTHCHECK) dans docker-compose.yml.
+🔒 Sécurité Renforcée
 
-Le service Front ne démarre que si l'API est saine, garantissant un démarrage robuste sans erreurs de connexion.
+Utilisateur Non-Root : Création d'un utilisateur système (appuser) dans les Dockerfiles. Aucun conteneur applicatif ne tourne en root.
 
-Configuration externalisée :
+Permissions Nginx : Configuration fine des droits sur /var/cache et /var/run pour permettre l'exécution sécurisée.
 
-Aucun mot de passe ou port n'est codé en dur ; tout est géré via le fichier .env.
+Isolation Réseau : La base de données n'est pas exposée publiquement, seul l'API peut lui parler.
 
-4. Difficultés rencontrées et améliorations possibles
+⚡ Performance & Optimisation
 
-Difficultés rencontrées
+Multi-Stage Builds : Utilisation d'une étape builder temporaire pour installer les dépendances Python, réduisant la taille finale de l'image.
 
-Durant la réalisation du projet, plusieurs obstacles techniques ont été surmontés :
+Images Minimales : Utilisation des versions alpine et slim (ex: python:3.11-slim pèse ~150Mo contre ~900Mo pour l'image standard).
 
-Difficulté
+.dockerignore : Exclusion des fichiers inutiles (__pycache__, .git) pour accélérer le build.
 
-Cause Technique
+4. Difficultés & Solutions
+
+Voici un résumé des défis techniques rencontrés lors de la réalisation du TD :
+
+Problème Rencontré
+
+Analyse
 
 Solution Apportée
 
-Crash de l'API (Healthcheck)
+❌ Crash Healthcheck API
 
-L'image python:slim est minimale et ne contient pas curl, rendant impossible le test de santé par défaut.
+L'image python:slim est trop légère, elle ne contient pas curl.
 
-Ajout de l'installation explicite de curl dans le Dockerfile de l'API.
+Ajout de apt-get install curl dans le Dockerfile API.
 
-Permissions Nginx (Non-Root)
+❌ Erreur "Permission Denied"
 
-En exécutant Nginx avec appuser, le processus ne pouvait pas écrire ses logs et fichiers temporaires (Permission denied).
+Nginx (en user non-root) ne pouvait pas écrire ses logs au démarrage.
 
-Création préventive des dossiers nécessaires (/var/cache/nginx, etc.) et attribution des droits à appuser dans le Dockerfile.
+Création préventive des dossiers (/var/cache/nginx) avec chown appuser dans le Dockerfile.
 
-Encodage des caractères
+❌ Accents corrompus (Ã¢)
 
-Les données s'affichaient avec des caractères corrompus (Ã¢) dans l'interface.
+Encodage par défaut de MySQL ou du connecteur Python incorrect.
 
-Configuration forcée de l'UTF-8 (utf8mb4) dans le connecteur Python et dans la commande de démarrage MySQL (--character-set-server).
+Ajout de charset='utf8mb4' dans Python et --character-set-server dans Docker Compose.
 
-Incompatibilité Alpine
+❌ Erreur Build Alpine
 
-Les commandes groupadd (Debian) ne fonctionnent pas sur Alpine Linux (utilisé pour le Front).
+La commande groupadd n'existe pas sous Alpine Linux.
 
-Adaptation des commandes pour Alpine : utilisation de addgroup -S et adduser -S.
+Utilisation des équivalents Alpine : addgroup -S et adduser -S.
 
-Améliorations possibles
+🔮 Améliorations Futures
 
-Pour passer ce projet en production, les pistes suivantes seraient à explorer :
+[ ] Mise en place de HTTPS avec Let's Encrypt.
 
-CI/CD (Intégration Continue) : Automatiser le lancement du script deploy.sh et des tests unitaires via un pipeline (GitLab CI ou GitHub Actions) à chaque modification du code.
+[ ] Intégration du script dans une pipeline CI/CD (GitHub Actions).
 
-Sécurisation avancée (HTTPS) : Ajouter un certificat SSL/TLS (via Let's Encrypt) sur le conteneur Nginx pour chiffrer les échanges.
-
-Scaling : Utiliser Docker Swarm ou Kubernetes pour répliquer le service API sur plusieurs conteneurs afin de supporter une charge plus importante.
-
-Registre d'images : Pousser les images construites sur un registre privé (Docker Hub / Harbor) pour que le serveur de production n'ait qu'à les télécharger (pull) sans avoir à les construire.
+[ ] Hébergement des images sur un Registre Privé (Docker Hub) pour accélérer le déploiement.
