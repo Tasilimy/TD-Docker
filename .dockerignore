@@ -1,0 +1,13 @@
+# Ignorer le cache et les environnements virtuels Python
+__pycache__
+*.pyc
+.venv
+venv/
+
+# Ignorer les dossiers et fichiers Git
+.git
+.gitignore
+
+# Ignorer les fichiers de configuration à ne pas copier
+*.log
+*.env

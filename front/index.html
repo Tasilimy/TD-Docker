@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Docker - Liste des Items</title>
+</head>
+<body>
+    <h1>Liste des Items</h1>
+    <ul id="items-list"></ul>
+    <p id="status-message">Chargement...</p>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const list = document.getElementById('items-list');
+            const statusMessage = document.getElementById('status-message');
+            
+            // L'API est accessible via le reverse proxy Nginx configuré sur /items
+            const API_URL = '/items';
+
+            fetch(API_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    statusMessage.textContent = `Succès ! ${data.length} item(s) trouvé(s).`;
+                    
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        // Affichage propre : Nom en gras suivi de la description
+                        li.innerHTML = `<strong>${item.name}</strong> : ${item.description}`;
+                        list.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    statusMessage.textContent = `Erreur lors de la récupération : ${error.message}.`;
+                    console.error('Fetch error:', error);
+                });
+        });
+    </script>
+</body>
+</html>
