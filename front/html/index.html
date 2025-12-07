@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Docker - Liste des Items</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #ff7a18;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #355c7d;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        #status-message {
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            background: #e8f5e9;
+            color: #0f5132;
+        }
+        
+        #status-message.error {
+            background: #ffe6d5;
+            color: #c24e00;
+        }
+        
+        #status-message.success {
+            background: #d1f5ff;
+            color: #005b73;
+        }
+        
+        #items-list {
+            list-style: none;
+        }
+        
+        #items-list li {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-left: 4px solid #ff7a18;
+        }
+        
+        #items-list li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(255, 122, 24, 0.25);
+        }
+        
+        #items-list li strong {
+            color: #0f4c75;
+            font-size: 1.2em;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        #items-list li span {
+            color: #555;
+            line-height: 1.6;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff7a18;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐳 TD Docker</h1>
+        <p class="subtitle">Architecture 3-Tiers : Nginx → Flask API → MySQL</p>
+        
+        <div id="status-message">
+            <div class="loader"></div>
+            Chargement des données...
+        </div>
+        
+        <ul id="items-list"></ul>
+        
+        <div class="footer">
+            Reverse Proxy Nginx ✓ | API Flask ✓ | Base MySQL ✓
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const list = document.getElementById('items-list');
+            const statusMessage = document.getElementById('status-message');
+            
+            const API_URL = '/items';
+
+            fetch(API_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    statusMessage.className = 'success';
+                    statusMessage.innerHTML = `✓ Succès ! ${data.length} item(s) chargé(s) depuis MySQL`;
+                    
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <strong>${item.name}</strong>
+                            <span>${item.description}</span>
+                        `;
+                        list.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    statusMessage.className = 'error';
+                    statusMessage.innerHTML = `✗ Erreur : ${error.message}`;
+                    console.error('Fetch error:', error);
+                });
+        });
+    </script>
+</body>
+</html>

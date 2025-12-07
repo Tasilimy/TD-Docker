@@ -6,15 +6,15 @@ import pymysql.cursors
 
 app = Flask(__name__)
 
-# Configuration via variables d'environnement
+# Config via variables d'environnement
 API_PORT = int(os.environ.get("API_PORT", 8080))
-DB_HOST = os.environ.get("MYSQL_HOST")
-DB_USER = os.environ.get("MYSQL_USER")
-DB_PASSWORD = os.environ.get("MYSQL_PASSWORD")
-DB_NAME = os.environ.get("MYSQL_DATABASE")
+DB_HOST = os.environ.get("DB_HOST")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_NAME = os.environ.get("DB_NAME")
 
 def get_db_connection(max_retries=5):
-    """Etablit la connexion à la base de données avec système de retries."""
+    """Connexion DB avec retries."""
     for i in range(max_retries):
         try:
             conn = pymysql.connect(
@@ -37,7 +37,7 @@ def get_db_connection(max_retries=5):
 
 @app.route('/status')
 def status():
-    """Route de healthcheck."""
+    """Healthcheck API/DB."""
     conn = get_db_connection(max_retries=1)
     db_status = "KO"
     if conn:
@@ -52,7 +52,7 @@ def status():
 
 @app.route('/items')
 def get_items():
-    """Récupère la liste des items."""
+    """Liste des items."""
     conn = get_db_connection()
     if not conn:
         return jsonify({"error": "Base de données indisponible"}), 503

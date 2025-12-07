@@ -1,17 +1,16 @@
-# Stage 1: Préparation des sources
+# Stage 1 : build sources
 FROM alpine as builder
 
 WORKDIR /tmp/build
 COPY index.html .
 
-# Stage 2: Serveur Web Nginx
+# Stage 2 : Nginx
 FROM nginx:stable-alpine
 
-# Création de l'utilisateur système non-root
+# Utilisateur système non-root
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Configuration des permissions pour exécution en non-root
-# Création et attribution des droits sur les dossiers critiques de Nginx
+# Droits nécessaires pour Nginx en non-root
 RUN mkdir -p /var/cache/nginx/client_temp \
              /var/cache/nginx/proxy_temp \
              /var/cache/nginx/fastcgi_temp \
@@ -24,11 +23,11 @@ RUN mkdir -p /var/cache/nginx/client_temp \
     && chown -R appuser:appgroup /etc/nginx/conf.d \
     && chown -R appuser:appgroup /var/run/nginx.pid
 
-# Copie des sources web avec les permissions appropriées
+# Copie des assets web
 COPY --from=builder /tmp/build/index.html /usr/share/nginx/html/index.html
 RUN chown -R appuser:appgroup /usr/share/nginx/html
 
-# Exécution en tant qu'utilisateur non-root
+# Exécution non-root
 USER appuser
 
 EXPOSE 80
